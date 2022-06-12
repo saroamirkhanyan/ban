@@ -1,7 +1,7 @@
 # Ban Programming Language
 > Ban is programming language inspired by Armenian.
 
-Example
+## Example
 ```
 սահմանիր ա-ն, որպես 1
 սահմանիր բ-ն, որպես 2
@@ -9,7 +9,7 @@ Example
 տպիր գ-ն
 ```
 
-Usage
+## Usage
 ```bash
 git clone https://github.com/saroamirkhanyan/ban
 cd ban
