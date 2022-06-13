@@ -9,6 +9,7 @@ export enum TokenType {
   OPERATOR,
   ENDING,
   PUNCTUATOR,
+  QUOTE,
 }
 
 export type Token = {
@@ -25,9 +26,7 @@ type scanTokenProps = {
 };
 
 export const tokenize = (source: string) => {
-  const { peek, consume, memo } = createParserHelpers<string>(
-    source.split('')
-  );
+  const { peek, consume, memo } = createParserHelpers<string>(source.split(''));
 
   let line = 1;
   let column = 1;
@@ -105,8 +104,21 @@ export const tokenize = (source: string) => {
     });
   }
 
+  function scanQuote(): Token | null {
+    if (peek() !== SYMBOLS.QUOTE_START) return null;
+    consume();
+    let value = '';
+    while (peek() !== SYMBOLS.QUOTE_END) {
+      value += peek();
+      consume();
+    }
+    consume();
+    return createToken(value, TokenType.QUOTE);
+  }
+
   function skipSpaces() {
     while (peek() === ' ') {
+      ++column;
       consume();
     }
   }
@@ -114,6 +126,11 @@ export const tokenize = (source: string) => {
   function skipComments() {
     if (peek() !== SYMBOLS.COMMENT_START) return false;
     while (peek() !== SYMBOLS.COMMENT_END) {
+      ++column;
+      if (peek() === '\n') {
+        line++;
+        column = 1;
+      }
       consume();
     }
     consume();
@@ -129,7 +146,7 @@ export const tokenize = (source: string) => {
     }
     if (peek() === '\n' || peek() === '\r') {
       ++line;
-      column = 0;
+      column = 1;
       consume();
       continue;
     }
@@ -139,7 +156,8 @@ export const tokenize = (source: string) => {
       scanIdentifier,
       scanEnding,
       scanPunctuator,
-      scanNumber
+      scanNumber,
+      scanQuote
     )();
     if (token) {
       column += token.value.length;

@@ -10,24 +10,32 @@ import {
   FunctionCall,
   Identifier,
   Value,
+  Statement,
+  FunctionDeclraration,
 } from './parser';
+
+type StatementsCompilerMap = {
+  [key: string]: (statement: Statement) => string;
+};
 
 const std = `
 function ${STD_MAP.call}(functionName, ...args) {
-	functionName(...args)
+	functionName(...args);
 }
-
 function ${STD_MAP.print}(number) {
 	console.log(number);
 }
 function ${STD_MAP.add}(x, offset) {
 	return x + offset;
 }
-function ${STD_MAP.mutliply}(multiple, multiplier) {
-	return multiple * multiplier
+function ${STD_MAP.difference}(x, offset) {
+  return x - offset
 }
-const ${STD_MAP.null} = null
-const տպիր = տպել
+function ${STD_MAP.mutliply}(multiple, multiplier) {
+	return multiple * multiplier;
+}
+const ${STD_MAP.null} = null;
+const տպիր = տպել;
 `;
 
 function compileValue(value: Value): string {
@@ -40,27 +48,59 @@ function compileValue(value: Value): string {
   throw new Error(`Value with kind ${value.kind} not implemented yet!`);
 }
 
+function compileArgs(args: Value[]) {
+  return args.map(compileValue).join(', ');
+}
+
 function compileExpression(expression: Expression) {
   if (expression.kind === ExpressionKind.FUNCTION_CALL) {
-    const { functionNameIdentifier, args } = expression as FunctionCall;
-    return `${functionNameIdentifier.name}(${args
-      .map(compileValue)
-      .join(',')})`;
+    const { callee, args } = expression as FunctionCall;
+    return `${callee.name}(${compileArgs(args)})`;
   }
   return compileValue(expression as Value);
+}
+
+function compileVariableDeclaration(statement: Statement): string {
+  const { identifier, init } = statement as VariableDeclaration;
+  return `const ${identifier.name} = ${compileExpression(init)};\n`;
+}
+
+function compileExpressionStatement(statement: Statement): string {
+  const expressionStatement = statement as ExpressionStatement;
+  return `${compileExpression(expressionStatement.expression)};\n`;
+}
+
+function compileFunctionDeclaration(statement: Statement): string {
+  const { identifier, args, body } = statement as FunctionDeclraration;
+  return (
+    `function ${identifier.name}(${compileArgs(args)}){\n` +
+    compileBody(body) +
+    '};\n'
+  );
+}
+
+const statementsCompilerMap: StatementsCompilerMap = {
+  [StatementKind.VARIABLE_DECLARATION]: compileVariableDeclaration,
+  [StatementKind.EXPRESSION_STATEMENT]: compileExpressionStatement,
+  [StatementKind.FUNCTION_DECLARATION]: compileFunctionDeclaration,
+};
+
+function compileBody(body: Statement[]) {
+  const chunks = [];
+  for (const statement of body) {
+    const statementCompiler = statementsCompilerMap[statement.kind];
+    if (statementCompiler) {
+      chunks.push(statementCompiler(statement));
+    } else {
+      throw new Error(`Unexpected StatementKind ${statement.kind}`);
+    }
+  }
+  return chunks.join('');
 }
 
 export function compile(program: Program) {
   const chunks: string[] = [];
   chunks.push(std);
-  for (const statement of program.body) {
-    if (statement.kind === StatementKind.VARIABLE_DECLARATION) {
-      const { identifier, init } = statement as VariableDeclaration;
-      chunks.push(`const ${identifier.name} = ${compileExpression(init)};\n`);
-    } else if (statement.kind === StatementKind.EXPRESSION_STATEMENT) {
-      const expressionStatement = statement as ExpressionStatement;
-      chunks.push(`${compileExpression(expressionStatement.expression)};\n`);
-    }
-  }
+  chunks.push(compileBody(program.body));
   return chunks.join('');
 }

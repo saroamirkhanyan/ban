@@ -1,5 +1,5 @@
 import { KEYWORDS, SYMBOLS } from '../constants';
-import { createParserHelpers, SyntaxError } from './helpers';
+import { createParserHelpers, findTruly, SyntaxError } from './helpers';
 import { Token, TokenType } from './tokenizer';
 
 export enum ExpressionKind {
@@ -24,7 +24,7 @@ export type Value = Literal | Identifier;
 
 export type FunctionCall = {
   kind: ExpressionKind;
-  functionNameIdentifier: Identifier;
+  callee: Identifier;
   args: Array<Value>;
 };
 
@@ -32,6 +32,7 @@ export type Expression = Value | FunctionCall;
 
 export enum StatementKind {
   VARIABLE_DECLARATION,
+  FUNCTION_DECLARATION,
   EXPRESSION_STATEMENT,
 }
 
@@ -41,12 +42,23 @@ export type VariableDeclaration = {
   init: Expression;
 };
 
+export type FunctionDeclraration = {
+  kind: StatementKind;
+  identifier: Identifier;
+  args: Value[];
+  // eslint-disable-next-line no-use-before-define
+  body: Statement[];
+};
+
 export type ExpressionStatement = {
   kind: StatementKind;
   expression: Expression;
 };
 
-export type Statement = VariableDeclaration | ExpressionStatement;
+export type Statement =
+  | VariableDeclaration
+  | ExpressionStatement
+  | FunctionDeclraration;
 
 export type Program = {
   body: Statement[];
@@ -54,7 +66,6 @@ export type Program = {
 
 export function parse(tokens: Token[]): Program {
   const { peek, consume, eof } = createParserHelpers<Token>(tokens);
-  const body: Statement[] = [];
 
   function checkEOF() {
     if (eof()) {
@@ -132,17 +143,17 @@ export function parse(tokens: Token[]): Program {
     const nextToken = peek(1);
 
     if (nextToken && nextToken.line === token.line) {
-      let functionNameIdentifier, args;
+      let callee, args;
       if (nextToken.type === TokenType.ENDING) {
         args = expectArgs();
-        functionNameIdentifier = expectIdentifier();
+        callee = expectIdentifier();
       } else {
-        functionNameIdentifier = expectIdentifier();
+        callee = expectIdentifier();
         args = expectArgs();
       }
       return {
         kind: ExpressionKind.FUNCTION_CALL,
-        functionNameIdentifier,
+        callee,
         args,
       };
     }
@@ -150,7 +161,11 @@ export function parse(tokens: Token[]): Program {
   }
 
   function scanVariableDeclaration(): VariableDeclaration | null {
-    if (peek().value !== KEYWORDS.VARIABLE_DECLARATION) return null;
+    if (
+      peek().type !== TokenType.KEYWORD ||
+      peek().value !== KEYWORDS.VARIABLE_DECLARATION
+    )
+      return null;
     consume();
     const identifier = expectIdentifier();
     const potentialComma = peek();
@@ -185,20 +200,72 @@ export function parse(tokens: Token[]): Program {
     };
   }
 
-  while (peek()) {
-    const variableDeclaration: VariableDeclaration | null =
-      scanVariableDeclaration();
-    if (variableDeclaration) {
-      body.push(variableDeclaration);
-    } else {
+  function scanFunctionDeclaration(): FunctionDeclraration | null {
+    const possibleDefineFunctionToken = peek();
+    if (
+      possibleDefineFunctionToken.type !== TokenType.KEYWORD ||
+      possibleDefineFunctionToken.value !== KEYWORDS.FUNCTION_DECLARATION
+    )
+      return null;
+
+    consume();
+
+    const identifier = expectIdentifier();
+
+    let args: Value[] = [];
+
+    if (possibleDefineFunctionToken.line === peek().line) {
+      args = expectArgs();
+      checkEOF();
+      if (
+        !peek() ||
+        peek().type !== TokenType.KEYWORD ||
+        peek().value !== KEYWORDS.WITH_PARAMTERES
+      ) {
+        const prevToken = peek(-1);
+        throw new SyntaxError(
+          `Սպասվում էր ${KEYWORDS.WITH_PARAMTERES} բանալի բառը`,
+          prevToken.line,
+          prevToken.column + prevToken.value.length
+        );
+      }
+      consume();
+    }
+    const body = scanBody();
+    return {
+      kind: StatementKind.FUNCTION_DECLARATION,
+      identifier,
+      args,
+      body,
+    };
+  }
+  function scanBody() {
+    const body: Statement[] = [];
+    while (peek()) {
+      if (
+        peek().type === TokenType.KEYWORD &&
+        peek().value === KEYWORDS.END_BLOCK
+      ) {
+        consume();
+        break;
+      }
+      const statement = findTruly<Statement | null>(
+        scanVariableDeclaration,
+        scanFunctionDeclaration
+      )();
+      if (statement) {
+        body.push(statement);
+        continue;
+      }
       const expression = expectExpression();
       body.push({
         kind: StatementKind.EXPRESSION_STATEMENT,
         expression,
       });
     }
+    return body;
   }
   return {
-    body,
+    body: scanBody(),
   };
 }

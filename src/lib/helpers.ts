@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type fn<ReturnType, ParametersTypes extends unknown[] = any> =
+export type fn<ReturnType, ParametersTypes extends any[] = any> =
   (...params: ParametersTypes) => ReturnType;
 
 export const findTruly =
@@ -8,7 +8,7 @@ export const findTruly =
   (...fns: fn<ReturnType, ParametersTypes>[]) =>
     (...args: ParametersTypes) => {
       for (const fn of fns) {
-        const result: ReturnType = fn(...args);
+        const result = fn(...args);
         if (result) return result;
       }
       return null;
