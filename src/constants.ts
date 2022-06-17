@@ -4,6 +4,7 @@ export const KEYWORDS = {
   FUNCTION_DECLARATION: 'գործառույթ',
   WITH_PARAMTERES: 'պարամետրերով',
   END_BLOCK: 'ավարտ',
+  IF: 'եթե',
 };
 
 export const SYMBOLS = {
