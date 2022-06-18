@@ -32,6 +32,7 @@ export type Expression = Value | FunctionCall;
 
 export enum StatementKind {
   VARIABLE_DECLARATION,
+  CONDITIONAL_STATEMENT,
   FUNCTION_DECLARATION,
   EXPRESSION_STATEMENT,
 }
@@ -55,10 +56,18 @@ export type ExpressionStatement = {
   expression: Expression;
 };
 
+export type ConditionalStatement = {
+  kind: StatementKind;
+  // eslint-disable-next-line no-use-before-define
+  condition: Expression;
+  body: Statement[];
+};
+
 export type Statement =
   | VariableDeclaration
   | ExpressionStatement
-  | FunctionDeclraration;
+  | FunctionDeclraration
+  | ConditionalStatement;
 
 export type Program = {
   body: Statement[];
@@ -200,6 +209,18 @@ export function parse(tokens: Token[]): Program {
     };
   }
 
+  function scanConditionalStatement(): ConditionalStatement | null {
+    if (peek().type !== TokenType.KEYWORD || peek().value !== KEYWORDS.IF) {
+      return null;
+    }
+    consume();
+    return {
+      kind: StatementKind.CONDITIONAL_STATEMENT,
+      condition: expectExpression(),
+      body: scanBody(),
+    };
+  }
+
   function scanFunctionDeclaration(): FunctionDeclraration | null {
     const possibleDefineFunctionToken = peek();
     if (
@@ -251,7 +272,8 @@ export function parse(tokens: Token[]): Program {
       }
       const statement = findTruly<Statement | null>(
         scanVariableDeclaration,
-        scanFunctionDeclaration
+        scanFunctionDeclaration,
+        scanConditionalStatement
       )();
       if (statement) {
         body.push(statement);

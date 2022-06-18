@@ -4,6 +4,7 @@ import {
   StatementKind,
   ExpressionKind,
   ExpressionStatement,
+  ConditionalStatement,
   VariableDeclaration,
   Expression,
   Literal,
@@ -33,6 +34,9 @@ function ${STD_MAP.difference}(x, offset) {
 }
 function ${STD_MAP.mutliply}(multiple, multiplier) {
 	return multiple * multiplier;
+}
+function ${STD_MAP.equal}(a, b) {
+	return a === b;
 }
 const ${STD_MAP.null} = null;
 const տպիր = տպել;
@@ -79,10 +83,20 @@ function compileFunctionDeclaration(statement: Statement): string {
   );
 }
 
+function compileConditionalStatement(statement: Statement): string {
+	const { condition, body } = statement as ConditionalStatement;
+	return (
+    `if (${compileExpression(condition)}){\n` +
+    compileBody(body) +
+    '};\n'
+  );
+}
+
 const statementsCompilerMap: StatementsCompilerMap = {
   [StatementKind.VARIABLE_DECLARATION]: compileVariableDeclaration,
   [StatementKind.EXPRESSION_STATEMENT]: compileExpressionStatement,
   [StatementKind.FUNCTION_DECLARATION]: compileFunctionDeclaration,
+  [StatementKind.CONDITIONAL_STATEMENT]: compileConditionalStatement,
 };
 
 function compileBody(body: Statement[]) {

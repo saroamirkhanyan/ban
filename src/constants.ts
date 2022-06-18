@@ -22,4 +22,5 @@ export const STD_MAP = {
   null: 'ոչինչ',
   mutliply: 'արտադրյալ',
   difference: 'տարբերություն',
+	equal: 'հավասար',
 };

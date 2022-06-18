@@ -5,19 +5,12 @@ import { compile } from './lib/compiler';
 
 const source = fs.readFileSync(process.argv[2], 'utf-8');
 
-function baneval(source: string, { isDebug = false }) {
+function baneval(source: string) {
   const tokens = tokenize(source);
-  if (isDebug) {
-    console.debug('Tokens');
-    console.dir(tokens, { depth: Infinity });
-  }
-  /*
-  const program = parse(tokens);
+  const program = parse(tokens); 
   const compiledProgram = compile(program);
+	console.log(compiledProgram);
   eval(compiledProgram);
-  */
 }
 
-baneval(source, {
-  isDebug: true
-});
+baneval(source);

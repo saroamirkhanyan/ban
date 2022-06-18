@@ -117,7 +117,7 @@ export const tokenize = (source: string) => {
   }
 
   function skipSpaces() {
-    while (peek() === ' ') {
+    while (peek() === ' ' || peek() === '\t') {
       ++column;
       consume();
     }
