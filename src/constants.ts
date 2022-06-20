@@ -5,6 +5,7 @@ export const KEYWORDS = {
   WITH_PARAMTERES: 'պարամետրերով',
   END_BLOCK: 'ավարտ',
   IF: 'եթե',
+  RETURN: 'պատասխանիր',
 };
 
 export const SYMBOLS = {
@@ -22,5 +23,5 @@ export const STD_MAP = {
   null: 'ոչինչ',
   mutliply: 'արտադրյալ',
   difference: 'տարբերություն',
-	equal: 'հավասար',
+  equal: 'հավասար',
 };

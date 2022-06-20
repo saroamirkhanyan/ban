@@ -34,6 +34,7 @@ export enum StatementKind {
   VARIABLE_DECLARATION,
   CONDITIONAL_STATEMENT,
   FUNCTION_DECLARATION,
+  RETURN_STATEMENT,
   EXPRESSION_STATEMENT,
 }
 
@@ -51,6 +52,11 @@ export type FunctionDeclraration = {
   body: Statement[];
 };
 
+export type ReturnStatement = {
+  kind: StatementKind,
+  value: Value
+}
+
 export type ExpressionStatement = {
   kind: StatementKind;
   expression: Expression;
@@ -58,8 +64,8 @@ export type ExpressionStatement = {
 
 export type ConditionalStatement = {
   kind: StatementKind;
-  // eslint-disable-next-line no-use-before-define
   condition: Expression;
+  // eslint-disable-next-line no-use-before-define
   body: Statement[];
 };
 
@@ -67,6 +73,7 @@ export type Statement =
   | VariableDeclaration
   | ExpressionStatement
   | FunctionDeclraration
+  | ReturnStatement
   | ConditionalStatement;
 
 export type Program = {
@@ -99,6 +106,14 @@ export function parse(tokens: Token[]): Program {
       token,
       hasEnding,
     };
+  }
+
+  function scanKeyword(name: any) {
+    if (peek().type === TokenType.KEYWORD && peek().value === name) {
+      consume();
+      return true;
+    }
+    return false;
   }
 
   function expectIdentifier(): Identifier {
@@ -260,6 +275,18 @@ export function parse(tokens: Token[]): Program {
       body,
     };
   }
+
+  function scanReturnStatement(): ReturnStatement | null {
+    if (scanKeyword(KEYWORDS.RETURN)) {
+      const value = expectValue();
+      return {
+        kind: StatementKind.RETURN_STATEMENT,
+        value,
+      };
+    }
+    return null;
+  }
+
   function scanBody() {
     const body: Statement[] = [];
     while (peek()) {
@@ -273,7 +300,8 @@ export function parse(tokens: Token[]): Program {
       const statement = findTruly<Statement | null>(
         scanVariableDeclaration,
         scanFunctionDeclaration,
-        scanConditionalStatement
+        scanConditionalStatement,
+        scanReturnStatement,
       )();
       if (statement) {
         body.push(statement);

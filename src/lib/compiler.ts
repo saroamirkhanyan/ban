@@ -13,6 +13,7 @@ import {
   Value,
   Statement,
   FunctionDeclraration,
+  ReturnStatement,
 } from './parser';
 
 type StatementsCompilerMap = {
@@ -83,19 +84,21 @@ function compileFunctionDeclaration(statement: Statement): string {
   );
 }
 
+function compileReturnStatement(statement: Statement): string {
+  const { value } = statement as ReturnStatement;
+  return `return ${compileValue(value)}\n`;
+}
+
 function compileConditionalStatement(statement: Statement): string {
-	const { condition, body } = statement as ConditionalStatement;
-	return (
-    `if (${compileExpression(condition)}){\n` +
-    compileBody(body) +
-    '};\n'
-  );
+  const { condition, body } = statement as ConditionalStatement;
+  return `if (${compileExpression(condition)}){\n` + compileBody(body) + '};\n';
 }
 
 const statementsCompilerMap: StatementsCompilerMap = {
   [StatementKind.VARIABLE_DECLARATION]: compileVariableDeclaration,
   [StatementKind.EXPRESSION_STATEMENT]: compileExpressionStatement,
   [StatementKind.FUNCTION_DECLARATION]: compileFunctionDeclaration,
+  [StatementKind.RETURN_STATEMENT]: compileReturnStatement,
   [StatementKind.CONDITIONAL_STATEMENT]: compileConditionalStatement,
 };
 

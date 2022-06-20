@@ -7,7 +7,7 @@ const source = fs.readFileSync(process.argv[2], 'utf-8');
 
 function baneval(source: string) {
   const tokens = tokenize(source);
-  const program = parse(tokens); 
+  const program = parse(tokens);
   const compiledProgram = compile(program);
   eval(compiledProgram);
 }
