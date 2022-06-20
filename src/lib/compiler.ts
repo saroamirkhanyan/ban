@@ -85,8 +85,8 @@ function compileFunctionDeclaration(statement: Statement): string {
 }
 
 function compileReturnStatement(statement: Statement): string {
-  const { value } = statement as ReturnStatement;
-  return `return ${compileValue(value)}\n`;
+  const { expression } = statement as ReturnStatement;
+  return `return ${compileExpression(expression)}\n`;
 }
 
 function compileConditionalStatement(statement: Statement): string {

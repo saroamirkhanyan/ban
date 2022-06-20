@@ -54,7 +54,7 @@ export type FunctionDeclraration = {
 
 export type ReturnStatement = {
   kind: StatementKind,
-  value: Value
+  expression: Expression
 }
 
 export type ExpressionStatement = {
@@ -278,10 +278,9 @@ export function parse(tokens: Token[]): Program {
 
   function scanReturnStatement(): ReturnStatement | null {
     if (scanKeyword(KEYWORDS.RETURN)) {
-      const value = expectValue();
       return {
         kind: StatementKind.RETURN_STATEMENT,
-        value,
+        expression: expectExpression(),
       };
     }
     return null;
