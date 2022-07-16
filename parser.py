@@ -59,17 +59,17 @@ class Parser:
             return (ExpressionType.FUNCTION, values, self.parse())
         elif self.match(TokenType.IDENTIFIER):
             # This means that this is function call
-            name = values[0]
+            name_token = values[0]
             args = []
             while True:
-                args.append(self.expect_value("Exepcted Argument"))
+                args.append(self.expect_value("Expected Argument"))
                 if not self.scan(TokenType.SEPARATOR):
                     break
-            return (ExpressionType.FUNCTION_CALL, name, args)
+            return (ExpressionType.FUNCTION_CALL, name_token[1], args)
         return values[0]
 
     def parse(self):
-        program = []
+        body = []
         while not self.explorer.eof() and not self.scan(
                 TokenType.END_FUNCTION):
             expression = self.scan_expression()
@@ -78,5 +78,5 @@ class Parser:
                 body.append((StatementType.EXPRESSION, expression))
                 continue
             identifier = self.scan(TokenType.IDENTIFIER)
-            body.append((StatementType.DEFINITION, expression, identifier))
-        return program
+            body.append((StatementType.DEFINITION, expression, identifier[1]))
+        return body

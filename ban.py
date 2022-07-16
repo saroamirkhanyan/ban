@@ -1,14 +1,11 @@
 from constants import DEBUG
 from tokenizer import (Tokenizer, print_tokens) 
 from parser import Parser
-from machine import Machine
-
+import machine
 source = """
-    «բարև» որպես անուն
     ճշմարիտ որպես սոված
-    ուրիշ չափոցով գործառույթ «
-        տպիր քեզ
-    » որպես վարձ
+    5 որպես թիվ
+    տպիր թիվ և սոված 
 """
 tokens = Tokenizer(source).tokenize()
 if DEBUG:
@@ -16,4 +13,7 @@ if DEBUG:
 program = Parser(tokens).parse()
 if DEBUG:
     print(program)
-Machine().execute(program)
+machine.execute(
+    machine.ExecutionContext(),
+    program
+)
