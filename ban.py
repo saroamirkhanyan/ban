@@ -1,6 +1,7 @@
 from constants import DEBUG
 from tokenizer import (Tokenizer, print_tokens) 
 from parser import Parser
+from machine import Machine
 
 source = """
     «բարև» որպես անուն
@@ -15,3 +16,4 @@ if DEBUG:
 program = Parser(tokens).parse()
 if DEBUG:
     print(program)
+Machine().execute(program)

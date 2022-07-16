@@ -2,9 +2,6 @@ import enum
 from explorer import Explorer
 from tokenizer import TokenType
 
-"""
-    :TODO Parse function call
-"""
 
 class ExpressionType(enum.Enum):
     VALUE = 0
@@ -18,6 +15,7 @@ class StatementType(enum.Enum):
 
 
 class Parser:
+
     def __init__(self, tokens):
         self.tokens = tokens
         self.explorer = Explorer(tokens)
@@ -40,13 +38,9 @@ class Parser:
         return token
 
     def scan_value(self):
-        return (
-            self.scan(TokenType.IDENTIFIER) or
-            self.scan(TokenType.NUMBER) or
-            self.scan(TokenType.TRUE) or
-            self.scan(TokenType.FALSE) or
-            self.scan(TokenType.QUOTE)
-        )
+        return (self.scan(TokenType.IDENTIFIER) or self.scan(TokenType.NUMBER)
+                or self.scan(TokenType.TRUE) or self.scan(TokenType.FALSE)
+                or self.scan(TokenType.QUOTE))
 
     def expect_value(self, error_message):
         value = self.scan_value()
@@ -61,12 +55,8 @@ class Parser:
                 values.append(self.scan_value())
         if self.scan(TokenType.PARAMETER):
             #:TODO Move error message to constants
-                self.expect(TokenType.FUNCTION, "Expected գործառույթ keyword")
-                return (
-                    ExpressionType.FUNCTION, 
-                    values,
-                    self.parse()
-                )
+            self.expect(TokenType.FUNCTION, "Expected գործառույթ keyword")
+            return (ExpressionType.FUNCTION, values, self.parse())
         elif self.match(TokenType.IDENTIFIER):
             # This means that this is function call
             name = values[0]
@@ -79,17 +69,14 @@ class Parser:
         return values[0]
 
     def parse(self):
-        body = []
-        while not self.explorer.eof() and not self.scan(TokenType.END_FUNCTION):
+        program = []
+        while not self.explorer.eof() and not self.scan(
+                TokenType.END_FUNCTION):
             expression = self.scan_expression()
             as_keyword = self.scan(TokenType.AS)
             if not as_keyword:
                 body.append((StatementType.EXPRESSION, expression))
                 continue
             identifier = self.scan(TokenType.IDENTIFIER)
-            body.append((
-                StatementType.DEFINITION,
-                expression,
-                identifier
-            ))
-        return body
+            body.append((StatementType.DEFINITION, expression, identifier))
+        return program
