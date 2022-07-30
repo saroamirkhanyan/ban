@@ -6,13 +6,27 @@ from tokenizer import TokenType
 
 class ExecutionContext:
 
-    def __init__(self):
+    def __init__(self, outer=None):
         self.variables = {}
         self.functions = {}
+        self.outer = outer
+
+
+def get_variable(context, name):
+    if name in context.variables:
+        return context.variables[name]
+    return context.outer and get_variable(context.outer, name)
+
+
+def get_function(context, name):
+    if name in context.functions:
+        return context.functions[name]
+    return context.outer and get_function(context.outer, name)
+
 
 def get_value(context, value_token):
     if value_token.type == TokenType.IDENTIFIER:
-        return context.variables[value_token.value]
+        return get_variable(context, value_token.value)
     if value_token.type == TokenType.TRUE:
         return True
     if value_token.type == TokenType.FALSE:
@@ -22,6 +36,7 @@ def get_value(context, value_token):
     if value_token.type == TokenType.QUOTE:
         return value_token.value
     raise Exception("Unexpected value " + value_token.value)
+
 
 def define(context, expression, name):
     expression_type = expression[0]
@@ -47,7 +62,7 @@ class NativeLibrary:
         for arg in args:
             value = arg.value
             if arg.type == TokenType.IDENTIFIER:
-                value = context.variables[arg.value]
+                value = get_variable(context, arg.value)
             stringified = NativeLibrary.to_string(value)
             printing.append(stringified)
         print(", ".join(x for x in printing))
@@ -59,15 +74,18 @@ PRINT = "տպիր"
 def call_native_function(context, function_name, args):
     if function_name == PRINT:
         NativeLibrary.print(context, args)
+    else:
+        raise Exception(function_name + " is not a native function")
 
 
 def call(context, function_name, args):
-    if function_name in context.functions:
-        function_args, function_body = context.functions[function_name]
-        function_context = ExecutionContext()
+    function_in_scope = get_function(context, function_name)
+    if function_in_scope:
+        function_args, function_body = function_in_scope
+        function_context = ExecutionContext(outer=context)
         for i in range(len(args)):
-            arg_name = function_args[i]            
-            function_context.variables[arg_name] = get_value(context, args[i]) 
+            arg_name = function_args[i]
+            function_context.variables[arg_name] = get_value(context, args[i])
         execute(function_context, function_body)
     else:
         call_native_function(context, function_name, args)
