@@ -1,21 +1,10 @@
 import enum
 from constants import (
-    LQUOTE,
-    RQUOTE,
-    AS,
-    TRUE,
-    FALSE,
-    FUNCTION,
-    SPACE,
-    NEW_LINE,
-    SEPARATOR,
-    PARAMETER,
-    IDENTIFIER_SYMBOLS,
-    NUMBER_SYMBOLS,
-    COMMENT_START,
-    COMMENT_END
-)
+    LQUOTE, RQUOTE, AS, TRUE, FALSE, FUNCTION, SPACE,
+                       NEW_LINE, SEPARATOR, PARAMETER, IDENTIFIER_SYMBOLS,
+                       NUMBER_SYMBOLS, COMMENT_START, COMMENT_END, ENDING_SYMBOLS)
 from explorer import Explorer
+
 
 class TokenType(enum.Enum):
     QUOTE = 1
@@ -28,6 +17,15 @@ class TokenType(enum.Enum):
     SEPARATOR = 8
     PARAMETER = 9
     END_FUNCTION = 10
+    ENDING = 11
+
+class Token:
+
+    def __init__(self, type, value, position):
+        self.type = type
+        self.value = value
+        self.position = position
+
 
 class Mode(enum.Enum):
     NORMAL = 1
@@ -35,15 +33,23 @@ class Mode(enum.Enum):
 
 
 def print_tokens(tokens):
-    for (token_type, value) in tokens:
-        print(str(token_type) + " " + value)
+    for token in tokens:
+        print(str(token.type) + " " + str(token.value))
 
 
 class Tokenizer(Explorer):
+
     def __init__(self, source):
         self.current_char_idx = 0
         self.mode = Mode.NORMAL
         self.source = source
+        self.position = {
+            'line': 0,
+            'column': 0
+        }
+
+    def create_token(self, type, value):
+        return Token(type, value, self.position)
 
     def scan_space(self):
         if self.peek() == SPACE:
@@ -76,16 +82,9 @@ class Tokenizer(Explorer):
         self.consume()
         return value
 
-    def scan_identifier(self):
+    def scan_word(self, SYMBOLS):
         value = ""
-        while self.peek() in IDENTIFIER_SYMBOLS:
-            value += self.peek()
-            self.consume()
-        return value
-
-    def scan_number(self):
-        value = ""
-        while self.peek() in NUMBER_SYMBOLS:
+        while self.peek() in SYMBOLS:
             value += self.peek()
             self.consume()
         return value
@@ -93,46 +92,56 @@ class Tokenizer(Explorer):
     def tokenize(self):
         tokens = []
         while not self.eof():
-            if (self.scan_space() or 
-                self.scan_new_line() or 
-                self.scan_comment()):
+            if (self.scan_space() or self.scan_new_line()
+                    or self.scan_comment()):
                 continue
-        
-            if self.mode == Mode.FUNCTION and self.peek() == LQUOTE: 
+
+            if self.mode == Mode.FUNCTION and self.peek() == LQUOTE:
                 self.mode = Mode.NORMAL
                 self.consume()
                 continue
             if self.peek() == RQUOTE:
-                tokens.append((TokenType.END_FUNCTION, ""))
+                tokens.append(self.create_token(TokenType.END_FUNCTION, ""))
                 self.consume()
                 continue
 
             quote = self.scan_quote()
             if quote:
-                tokens.append((TokenType.QUOTE, quote))
+                tokens.append(self.create_token(TokenType.QUOTE, quote))
                 continue
-            identifier = self.scan_identifier()
+
+
+            word = self.scan_word(IDENTIFIER_SYMBOLS)
             #:TODO Refactor
-            if identifier:
+            if word:
+                has_ending = False
+                if word[-1] in ENDING_SYMBOLS:
+                    word = word[:-1]
+                    has_ending = True
+
+                word_types = {
+                    TRUE: TokenType.TRUE,
+                    FALSE: TokenType.FALSE,
+                    SEPARATOR: TokenType.SEPARATOR,
+                    PARAMETER: TokenType.PARAMETER,
+                    AS: TokenType.AS,
+                    FUNCTION: TokenType.FUNCTION,
+                }
                 type = TokenType.IDENTIFIER
-                if identifier == TRUE:
-                    type = TokenType.TRUE
-                elif identifier == FALSE:
-                    type = TokenType.FALSE
-                elif identifier == SEPARATOR:
-                    type = TokenType.SEPARATOR
-                elif identifier == PARAMETER:
-                    type = TokenType.PARAMETER
-                elif identifier == FUNCTION:
-                    type = TokenType.FUNCTION
+                if word in word_types:
+                    type = word_types[word]
+                if word == FUNCTION:
                     self.mode = Mode.FUNCTION
-                elif identifier == AS:
-                    type = TokenType.AS
-                tokens.append((type, identifier))
+
+                tokens.append(self.create_token(type, word))
+                if has_ending:
+                    tokens.append(self.create_token(TokenType.ENDING, ""))
                 continue
-            number = self.scan_number()
+            
+            number = self.scan_word(NUMBER_SYMBOLS)
             if number:
-                tokens.append((TokenType.NUMBER, number))
+                tokens.append(
+                    self.create_token(TokenType.NUMBER, number))
                 continue
             raise Exception("Unexpected token " + self.peek())
         return tokens
