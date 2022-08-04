@@ -2,7 +2,7 @@ import enum
 from constants import (
     LQUOTE, RQUOTE, AS, TRUE, FALSE, FUNCTION, SPACE,
                        NEW_LINE, SEPARATOR, PARAMETER, IDENTIFIER_SYMBOLS,
-                       NUMBER_SYMBOLS, COMMENT_START, COMMENT_END, ENDING_SYMBOLS)
+                       NUMBER_SYMBOLS, COMMENT_START, COMMENT_END, ENDING_SYMBOLS, TAB)
 from explorer import Explorer
 
 
@@ -52,13 +52,15 @@ class Tokenizer(Explorer):
         return Token(type, value, self.position)
 
     def scan_space(self):
-        if self.peek() == SPACE:
+        if self.peek() == SPACE or self.peek() == TAB:
+            self.position['column'] += 1
             self.consume()
             return True
         return False
 
     def scan_new_line(self):
         if self.peek() == NEW_LINE:
+            self.position['line'] += 1
             self.consume()
             return True
         return False
@@ -143,5 +145,5 @@ class Tokenizer(Explorer):
                 tokens.append(
                     self.create_token(TokenType.NUMBER, number))
                 continue
-            raise Exception("Unexpected token " + self.peek())
+            raise Exception("Unexpected token " + self.peek() + " at " + str(self.position['line']))
         return tokens

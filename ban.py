@@ -1,19 +1,12 @@
 from constants import DEBUG
+import sys
 from tokenizer import (Tokenizer, print_tokens)
 from parser import Parser
+import sys
 import machine
-
-source = """
-    ճշմարիտ որպես սոված
-    տպիր սովածը
-    բարև չափոցով գործառույթ «
-        տպիր սովածը 
-        չգիտեմինչ սովածը
-    » որպես չգիտեմինչ
-    չգիտեմինչ սովածը
-    չգիտեմինչ սովածը
-"""
-
+source_file = open(sys.argv[1], "r")
+source = source_file.read() 
+source_file.close()
 tokens = Tokenizer(source).tokenize()
 if DEBUG:
     print_tokens(tokens)

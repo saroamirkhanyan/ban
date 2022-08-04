@@ -13,6 +13,7 @@ SEPARATOR = 'և'
 PARAMETER = 'չափոցով'
 COMMENT_START = '('
 COMMENT_END = ')'
+TAB = '\t'
 
 IDENTIFIER_SYMBOLS = 'ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔևՕՖաբգդեզէըթժիլխծկհձղճմյնշոչպջռսվտրցուփքևօֆ'
 NUMBER_SYMBOLS = '01234567890'
